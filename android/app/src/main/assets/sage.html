@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAGE Child</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; color: #1e293b; text-align: center; }
+        #qrcode { margin: 20px 0; }
+        h1 { font-size: 24px; margin-bottom: 8px; }
+        p { color: #64748b; max-width: 300px; }
+        #status { margin-top: 10px; font-weight: bold; color: #2563eb; }
+    </style>
+</head>
+<body>
+    <h1>SAGE Child Care</h1>
+    <p>Scan this QR code with the Parent Dashboard app to link devices.</p>
+    <div id="qrcode"></div>
+    <div id="status">Waiting for parent...</div>
+
+    <script>
+        const peer = new Peer();
+        let conn = null;
+        
+        // Expose this function to Java
+        window.sendDataToParent = function(data) {
+            if (conn && conn.open) {
+                conn.send(data);
+            }
+        };
+
+        peer.on('open', function(id) {
+            // Generate QR Code with the Peer ID
+            new QRCode(document.getElementById("qrcode"), {
+                text: id,
+                width: 200,
+                height: 200
+            });
+        });
+
+        peer.on('connection', function(connection) {
+            conn = connection;
+            document.getElementById("status").innerText = "Connected to Parent!";
+            document.getElementById("qrcode").style.display = 'none';
+            
+            conn.on('data', function(data) {
+                console.log("Received from parent:", data);
+            });
+        });
+    </script>
+</body>
+</html>

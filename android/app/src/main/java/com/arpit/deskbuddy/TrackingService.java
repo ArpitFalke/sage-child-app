@@ -44,9 +44,11 @@ public class TrackingService extends Service implements LocationListener {
     public void onLocationChanged(Location location) {
         String usage = usageTracker.getUsageData();
         Log.d("SAGE_Tracking", "Lat: " + location.getLatitude() + ", Lng: " + location.getLongitude());
-        Log.d("SAGE_Usage", "App Usage:\n" + usage);
         
-        // TODO Step 2: Send this data to Next.js API
+        // Format as JSON and push to WebView
+        String safeUsage = usage.replace("\"", "'");
+        String jsonData = String.format("{\"lat\":%f,\"lng\":%f,\"usage\":\"%s\"}", location.getLatitude(), location.getLongitude(), safeUsage);
+        MainActivity.pushDataToWebView(jsonData);
     }
 
     @Override public void onStatusChanged(String provider, int status, Bundle extras) {}
