@@ -2,23 +2,27 @@ package com.arpit.deskbuddy;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.text.InputType;
 import android.view.Gravity;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
     private static final int REQ_LOCATION = 1001;
-    private static final int REQ_NOTIFICATIONS = 1002;
+    private AppLockManager lockManager;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        lockManager = new AppLockManager(this);
         buildUi();
         requestEssentialPermissions();
     }
@@ -26,9 +30,6 @@ public class MainActivity extends Activity {
     private void requestEssentialPermissions() {
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, REQ_LOCATION);
-        }
-        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_NOTIFICATIONS);
         }
     }
 
@@ -43,23 +44,6 @@ public class MainActivity extends Activity {
         title.setTextSize(28);
         title.setGravity(Gravity.CENTER);
         root.addView(title, new LinearLayout.LayoutParams(-1, -2));
-
-        TextView info = new TextView(this);
-        info.setText("\nChild Device Setup\n\n1. Location Permission Granted.\n2. Usage Access Granted.\n3. Start Tracking.\n");
-        info.setTextSize(16);
-        info.setPadding(0, 32, 0, 32);
-        root.addView(info, new LinearLayout.LayoutParams(-1, -2));
-
-        Button btnUsage = new Button(this);
-        btnUsage.setText("Grant Usage Access");
-        btnUsage.setOnClickListener(v -> {
-            try {
-                startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
-            } catch (Exception e) {
-                Toast.makeText(this, "Usage access not available on this device", Toast.LENGTH_SHORT).show();
-            }
-        });
-        root.addView(btnUsage, new LinearLayout.LayoutParams(-1, -2));
 
         Button btnStart = new Button(this);
         btnStart.setText("Start Parental Tracking");
@@ -77,18 +61,57 @@ public class MainActivity extends Activity {
         root.addView(btnStart, new LinearLayout.LayoutParams(-1, -2));
 
         Button btnStop = new Button(this);
-        btnStop.setText("Stop Tracking");
-        btnStop.setOnClickListener(v -> stopService(new Intent(this, TrackingService.class)));
+        btnStop.setText("Stop Parental Tracking");
+        btnStop.setOnClickListener(v -> {
+            if (!lockManager.isPinSet()) {
+                promptSetPin();
+            } else {
+                promptVerifyPin();
+            }
+        });
         root.addView(btnStop, new LinearLayout.LayoutParams(-1, -2));
+
+        Button btnUsage = new Button(this);
+        btnUsage.setText("Grant Usage Access");
+        btnUsage.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)));
+        root.addView(btnUsage, new LinearLayout.LayoutParams(-1, -2));
 
         setContentView(root);
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQ_LOCATION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Location Permission Granted", Toast.LENGTH_SHORT).show();
-        }
+    private void promptSetPin() {
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        new AlertDialog.Builder(this)
+            .setTitle("Set Parental PIN")
+            .setMessage("Enter a 4-digit PIN to lock settings")
+            .setView(input)
+            .setPositiveButton("Save", (dialog, which) -> {
+                String pin = input.getText().toString();
+                if (pin.length() == 4) {
+                    lockManager.setPin(pin);
+                    Toast.makeText(this, "PIN Set", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "PIN must be 4 digits", Toast.LENGTH_SHORT).show();
+                }
+            })
+            .show();
+    }
+
+    private void promptVerifyPin() {
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        new AlertDialog.Builder(this)
+            .setTitle("Enter Parental PIN")
+            .setView(input)
+            .setPositiveButton("Unlock", (dialog, which) -> {
+                if (lockManager.verifyPin(input.getText().toString())) {
+                    stopService(new Intent(this, TrackingService.class));
+                    Toast.makeText(this, "Tracking Stopped", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Incorrect PIN", Toast.LENGTH_SHORT).show();
+                }
+            })
+            .show();
     }
 }

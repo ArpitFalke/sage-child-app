@@ -17,6 +17,7 @@ public class TrackingService extends Service implements LocationListener {
     private static final String CHANNEL_ID = "sage_tracking";
     private static final int NOTIFICATION_ID = 101;
     private LocationManager locationManager;
+    private UsageTracker usageTracker;
 
     @Override
     public void onCreate() {
@@ -24,6 +25,7 @@ public class TrackingService extends Service implements LocationListener {
         createChannel();
         startForeground(NOTIFICATION_ID, notification());
         
+        usageTracker = new UsageTracker(this);
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         try {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, this);
@@ -40,17 +42,16 @@ public class TrackingService extends Service implements LocationListener {
 
     @Override
     public void onLocationChanged(Location location) {
+        String usage = usageTracker.getUsageData();
         Log.d("SAGE_Tracking", "Lat: " + location.getLatitude() + ", Lng: " + location.getLongitude());
+        Log.d("SAGE_Usage", "App Usage:\n" + usage);
+        
+        // TODO Step 2: Send this data to Next.js API
     }
 
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {}
-
-    @Override
-    public void onProviderEnabled(String provider) {}
-
-    @Override
-    public void onProviderDisabled(String provider) {}
+    @Override public void onStatusChanged(String provider, int status, Bundle extras) {}
+    @Override public void onProviderEnabled(String provider) {}
+    @Override public void onProviderDisabled(String provider) {}
 
     private Notification notification() {
         return new Notification.Builder(this, CHANNEL_ID)
