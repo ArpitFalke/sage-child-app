@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.sage.childapp">
 
     <!-- Permissions for Location -->
@@ -16,9 +17,9 @@
 
     <application
         android:allowBackup="true"
-        android:label="SAGE Child Care"
-        android:icon="@mipmap/ic_launcher"
-        android:theme="@style/Theme.MaterialComponents.DayNight.DarkActionBar">
+        android:label="SAGE Child"
+        android:theme="@style/Theme.AppCompat.DayNight.DarkActionBar"
+        tools:targetApi="31">
         
         <activity
             android:name=".MainActivity"
