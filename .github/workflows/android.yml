@@ -20,11 +20,11 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Setup Android SDK
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK
         run: |
-          export ANDROID_HOME=/usr/local/lib/android/sdk
-          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-          yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Set up Gradle
@@ -32,13 +32,9 @@ jobs:
         with:
           gradle-version: "8.9"
 
-      - name: Generate Gradle Wrapper
+      - name: Build APK
         working-directory: android
-        run: gradle wrapper --gradle-version 8.9
-
-      - name: Build APK with Stacktrace
-        working-directory: android
-        run: ./gradlew assembleDebug --stacktrace --no-daemon
+        run: gradle assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
