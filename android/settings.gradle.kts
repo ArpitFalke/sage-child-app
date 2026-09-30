@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "SageChildApp"
-include ':app'
+rootProject.name = "DeskBuddyAndroid"
+include(":app")
