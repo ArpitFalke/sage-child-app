@@ -5,7 +5,6 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
-import android.content.pm.ServiceInfo;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -13,8 +12,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
-
-import androidx.annotation.Nullable;
 
 public class TrackingService extends Service implements LocationListener {
     private static final String CHANNEL_ID = "sage_tracking";
@@ -27,7 +24,6 @@ public class TrackingService extends Service implements LocationListener {
         createChannel();
         startForeground(NOTIFICATION_ID, notification());
         
-        // Start requesting location updates
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         try {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, this);
@@ -39,12 +35,11 @@ public class TrackingService extends Service implements LocationListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        return START_STICKY; // Restart if killed
+        return START_STICKY;
     }
 
     @Override
     public void onLocationChanged(Location location) {
-        // THIS IS WHERE WE WILL SEND THE COORDINATES TO YOUR NEXT.JS API
         Log.d("SAGE_Tracking", "Lat: " + location.getLatitude() + ", Lng: " + location.getLongitude());
     }
 
@@ -80,7 +75,6 @@ public class TrackingService extends Service implements LocationListener {
         super.onDestroy();
     }
 
-    @Nullable
     @Override
     public IBinder onBind(Intent intent) { return null; }
 }
