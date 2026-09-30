@@ -4,10 +4,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SAGE Child</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; color: #1e293b; text-align: center; }
         #qrcode { margin: 20px 0; }
+        #qrcode img { border: 8px solid white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h1 { font-size: 24px; margin-bottom: 8px; }
         p { color: #64748b; max-width: 300px; }
         #status { margin-top: 10px; font-weight: bold; color: #2563eb; }
@@ -23,7 +23,6 @@
         const peer = new Peer();
         let conn = null;
         
-        // Expose this function to Java
         window.sendDataToParent = function(data) {
             if (conn && conn.open) {
                 conn.send(data);
@@ -31,12 +30,12 @@
         };
 
         peer.on('open', function(id) {
-            // Generate QR Code with the Peer ID
-            new QRCode(document.getElementById("qrcode"), {
-                text: id,
-                width: 200,
-                height: 200
-            });
+            // Rapid fix: Use image API instead of JS library
+            const img = document.createElement("img");
+            img.src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + id;
+            img.width = 200;
+            img.height = 200;
+            document.getElementById("qrcode").appendChild(img);
         });
 
         peer.on('connection', function(connection) {
